@@ -70,7 +70,7 @@ $ rex
 go install rexrun.dev/rex/cmd/rex@latest
 ```
 
-Or download a binary from [Releases](https://github.com/rexrun/rex/releases).
+Or download a binary from [Releases](https://github.com/rexrun-dev/rex/releases).
 
 ## Commands
 
@@ -160,7 +160,7 @@ Rex uses this first when present. Your team always gets the right command.
 ## Contributing
 
 ```bash
-git clone https://github.com/rexrun/rex
+git clone https://github.com/rexrun-dev/rex
 cd rex
 rex test  # yes, rex tests itself 🦖
 ```
