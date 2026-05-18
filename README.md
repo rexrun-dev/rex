@@ -167,4 +167,4 @@ rex test  # yes, rex tests itself 🦖
 
 ## License
 
-MIT
+Apache 2.0
