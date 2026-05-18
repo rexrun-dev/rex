@@ -1,0 +1,12 @@
+# build
+/rex.exe
+/bin/
+/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
