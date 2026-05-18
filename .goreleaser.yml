@@ -1,0 +1,49 @@
+version: 2
+
+builds:
+  - main: ./cmd/rex
+    binary: rex
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+
+archives:
+  - format: tar.gz
+    name_template: "rex_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+
+release:
+  github:
+    owner: rexrun-dev
+    name: rex
+  header: |
+    ## rex {{ .Version }}
+    
+    **Run anything, know nothing.** Zero-config universal project runner.
+    
+    ### Install
+    ```bash
+    go install rexrun.dev/rex/cmd/rex@{{ .Version }}
+    ```
+    Or download the binary for your platform below.

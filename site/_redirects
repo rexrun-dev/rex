@@ -1,0 +1,3 @@
+# Cloudflare Pages redirects
+# Go vanity imports need to serve HTML with meta tags
+/rex/* /rex/index.html 200

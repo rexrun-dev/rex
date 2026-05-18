@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rex — run anything, know nothing.</title>
+    <meta name="description" content="Zero-config universal project runner. Detects your stack and runs the right command. No README reading. No memorizing.">
+    <meta name="keywords" content="cli, developer tools, task runner, zero config, universal runner, go, node, python, rust">
+    
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://rexrun.dev">
+    <meta property="og:title" content="rex — run anything, know nothing.">
+    <meta property="og:description" content="Zero-config universal project runner. rex test in any repo, without reading the README.">
+    <meta property="og:image" content="https://rexrun.dev/social-preview.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="rex — run anything, know nothing.">
+    <meta name="twitter:description" content="Zero-config universal project runner. rex test in any repo.">
+    <meta name="twitter:image" content="https://rexrun.dev/social-preview.png">
+
+    <!-- Go vanity imports -->
+    <meta name="go-import" content="rexrun.dev/rex git https://github.com/rexrun-dev/rex">
+    <meta name="go-source" content="rexrun.dev/rex https://github.com/rexrun-dev/rex https://github.com/rexrun-dev/rex/tree/main{/dir} https://github.com/rexrun-dev/rex/blob/main{/dir}/{file}#L{line}">
+
+    <link rel="icon" type="image/png" href="/icon.png">
+    <style>
+        :root {
+            --bg: #0a0a0b;
+            --surface: #141416;
+            --border: #2a2a2e;
+            --text: #e4e4e7;
+            --dim: #71717a;
+            --orange: #f97316;
+            --orange-glow: rgba(249, 115, 22, 0.15);
+            --green: #22c55e;
+            --cyan: #06b6d4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+        
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 80px 0 48px;
+        }
+        .hero img {
+            width: 280px;
+            margin-bottom: 24px;
+        }
+        .tagline {
+            font-size: 1.5rem;
+            color: var(--dim);
+            margin-bottom: 32px;
+            font-weight: 300;
+        }
+        .install-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .install-box:hover {
+            border-color: var(--orange);
+        }
+        .install-box .prompt { color: var(--orange); }
+        .install-box .copy {
+            color: var(--dim);
+            font-size: 0.8rem;
+            margin-left: 16px;
+        }
+
+        /* Terminal Demo */
+        .demo {
+            margin: 64px 0;
+        }
+        .terminal {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .terminal-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+        .terminal-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+        }
+        .terminal-body {
+            padding: 20px 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .terminal-body .prompt { color: var(--orange); }
+        .terminal-body .cmd { color: var(--text); }
+        .terminal-body .output { color: var(--dim); }
+        .terminal-body .arrow { color: var(--orange); }
+        .terminal-body .success { color: var(--green); }
+        .terminal-body .label { color: var(--cyan); }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 64px 0;
+        }
+        .feature {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .feature h3 {
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .feature p {
+            font-size: 0.8rem;
+            color: var(--dim);
+        }
+
+        /* Stacks */
+        .stacks {
+            text-align: center;
+            margin: 64px 0;
+        }
+        .stacks h2 {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: var(--dim);
+            font-weight: 400;
+        }
+        .stack-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+        .stack-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+
+        /* CTA */
+        .cta {
+            text-align: center;
+            padding: 64px 0 80px;
+        }
+        .cta a {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--orange);
+            color: #000;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+        .cta a:hover { opacity: 0.9; }
+        .cta .secondary {
+            display: block;
+            margin-top: 16px;
+            color: var(--dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .cta .secondary:hover { color: var(--text); }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 24px 0;
+            text-align: center;
+            color: var(--dim);
+            font-size: 0.8rem;
+        }
+        footer a { color: var(--orange); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <section class="hero">
+            <img src="/logo.png" alt="rex">
+            <p class="tagline">run anything, know nothing.</p>
+            <div class="install-box" onclick="navigator.clipboard.writeText('go install rexrun.dev/rex/cmd/rex@latest')">
+                <span class="prompt">$</span>
+                <span>go install rexrun.dev/rex/cmd/rex@latest</span>
+                <span class="copy">click to copy</span>
+            </div>
+        </section>
+
+        <section class="demo">
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot"></div>
+                    <div class="terminal-dot"></div>
+                    <div class="terminal-dot"></div>
+                </div>
+                <div class="terminal-body">
+<span class="prompt">$</span> <span class="cmd">git clone https://github.com/gin-gonic/gin && cd gin</span>
+<span class="prompt">$</span> <span class="cmd">rex</span>
+
+  <span class="output">🦖</span> <span class="cmd">gin</span>
+
+  <span class="output">stack</span>  <span class="cmd">go</span>
+
+  <span class="output">commands</span>
+    <span class="label">rex test</span>   <span class="output">→</span> <span class="output">go test ./...</span>
+    <span class="label">rex run</span>    <span class="output">→</span> <span class="output">go run .</span>
+    <span class="label">rex build</span>  <span class="output">→</span> <span class="output">go build ./...</span>
+    <span class="label">rex deps</span>   <span class="output">→</span> <span class="output">go mod download</span>
+
+<span class="prompt">$</span> <span class="cmd">rex test</span>
+<span class="arrow">→</span> <span class="output">go test ./...</span>
+<span class="success">ok</span>  <span class="output">github.com/gin-gonic/gin   3.1s</span>
+<span class="success">✓ 498 tests passed</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="feature">
+                <h3>Zero config</h3>
+                <p>No files to write. No setup. Works instantly in any repo.</p>
+            </div>
+            <div class="feature">
+                <h3>Transparent</h3>
+                <p>Always shows the command it runs. No magic, no surprises.</p>
+            </div>
+            <div class="feature">
+                <h3>Fast</h3>
+                <p>Single binary, &lt;50ms startup. No runtime, no network calls.</p>
+            </div>
+            <div class="feature">
+                <h3>Universal</h3>
+                <p>Go, Node, Python, Rust, Java, Docker, Make, Just. One interface.</p>
+            </div>
+            <div class="feature">
+                <h3>Smart fallback</h3>
+                <p>Reads Makefile, Justfile, Taskfile, package.json scripts first.</p>
+            </div>
+            <div class="feature">
+                <h3>CI-ready</h3>
+                <p>Correct exit codes. Works in GitHub Actions, GitLab CI, any pipeline.</p>
+            </div>
+        </section>
+
+        <section class="stacks">
+            <h2>Supported stacks</h2>
+            <div class="stack-list">
+                <span class="stack-badge">Go</span>
+                <span class="stack-badge">Node.js</span>
+                <span class="stack-badge">Python</span>
+                <span class="stack-badge">Rust</span>
+                <span class="stack-badge">Java</span>
+                <span class="stack-badge">Docker</span>
+                <span class="stack-badge">Makefile</span>
+                <span class="stack-badge">Justfile</span>
+            </div>
+        </section>
+
+        <section class="cta">
+            <a href="https://github.com/rexrun-dev/rex">⭐ Star on GitHub</a>
+            <a href="https://github.com/rexrun-dev/rex" class="secondary">View documentation →</a>
+        </section>
+    </div>
+
+    <footer>
+        <p>Built with 🦖 by <a href="https://github.com/rexrun-dev">rexrun-dev</a> · <a href="mailto:hello@rexrun.dev">hello@rexrun.dev</a></p>
+    </footer>
+</body>
+</html>
