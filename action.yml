@@ -1,0 +1,28 @@
+name: 'rex - Universal Project Runner'
+description: 'Zero-config CLI that detects your stack and runs the right command. Use rex test, rex build, rex deps in any repo.'
+author: 'rexrun-dev'
+branding:
+  icon: 'terminal'
+  color: 'orange'
+
+inputs:
+  command:
+    description: 'The rex command to run (test, build, run, deps, clean, fresh, fmt, lint, doctor)'
+    required: true
+    default: 'test'
+  version:
+    description: 'Version of rex to install'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install rex
+      shell: bash
+      run: |
+        go install rexrun.dev/rex/cmd/rex@${{ inputs.version }}
+    - name: Run rex
+      shell: bash
+      run: |
+        rex ${{ inputs.command }}

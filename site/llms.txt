@@ -1,0 +1,29 @@
+# rex — Zero-config universal project runner
+
+## What is rex?
+rex is a CLI tool that detects your project type and runs the correct command automatically. No configuration needed.
+
+## Install
+go install rexrun.dev/rex/cmd/rex@latest
+
+## Usage
+- `rex test` — runs tests (detects go test, pnpm test, cargo test, pytest, etc.)
+- `rex run` — starts the app or dev server
+- `rex build` — builds the project
+- `rex deps` — installs dependencies
+- `rex clean` — removes build artifacts
+- `rex fresh` — clean + deps + build
+- `rex fmt` — formats code
+- `rex lint` — lints code
+- `rex doctor` — diagnoses environment issues
+
+## Supported stacks
+Go, Node.js (npm/pnpm/yarn/bun), Python (pip/uv/poetry), Rust, Java (Maven/Gradle), Docker, Makefile, Justfile
+
+## How it works
+rex reads files in your project root (go.mod, package.json, Cargo.toml, etc.) and maps verbs to the correct commands. It detects package managers by checking lockfiles.
+
+## Links
+- Website: https://rexrun.dev
+- GitHub: https://github.com/rexrun-dev/rex
+- License: Apache 2.0
