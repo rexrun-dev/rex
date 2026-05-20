@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -43,6 +44,15 @@ func run(args []string) error {
 		return runDoctor()
 	case "fresh":
 		return runFresh()
+	case "clone":
+		if len(args) < 2 {
+			return fmt.Errorf("usage: rex clone <url> [dir]")
+		}
+		dir := ""
+		if len(args) > 2 {
+			dir = args[2]
+		}
+		return runClone(args[1], dir)
 	}
 
 	verb := detect.Verb(args[0])
@@ -201,6 +211,46 @@ func runFresh() error {
 	return nil
 }
 
+func runClone(url, dir string) error {
+	// Determine target directory
+	if dir == "" {
+		// Extract repo name from URL
+		parts := strings.Split(strings.TrimSuffix(url, ".git"), "/")
+		dir = parts[len(parts)-1]
+	}
+
+	fmt.Printf("%s cloning %s\n", display.Arrow(), display.Bold(url))
+	if err := execCommand("git clone "+url+" "+dir, "."); err != nil {
+		return fmt.Errorf("clone failed: %w", err)
+	}
+
+	// Resolve absolute path
+	absDir, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+
+	// Detect the project
+	d := detect.Detect(absDir)
+	if d.Stack == "" {
+		fmt.Printf("\n%s cloned to %s (no stack detected)\n", display.Green("✓"), dir)
+		return nil
+	}
+
+	fmt.Printf("\n%s detected %s project\n", display.Green("✓"), display.Cyan(d.Stack))
+
+	// Auto-install dependencies if detected
+	if depsCmd, ok := d.Commands[detect.VerbDeps]; ok {
+		fmt.Printf("%s %s %s\n", display.Arrow(), display.Bold("deps"), display.Dim(depsCmd))
+		if err := execCommand(depsCmd, absDir); err != nil {
+			fmt.Printf("%s deps failed (non-fatal): %v\n", display.Yellow("⚠"), err)
+		}
+	}
+
+	fmt.Printf("\n%s ready! cd %s && rex run\n", display.Green("✓"), dir)
+	return nil
+}
+
 func printHelp() {
 	fmt.Print(`rex — run anything, know nothing.
 
@@ -214,6 +264,8 @@ Usage:
   rex fresh        clean + deps + build
   rex fmt          format code
   rex lint         lint code
+  rex clone <url>  clone + detect + install deps
+  rex doctor       diagnose environment
 
 Flags:
   rex --list       show all detected commands

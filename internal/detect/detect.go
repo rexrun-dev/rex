@@ -84,6 +84,49 @@ func Detect(root string) Detection {
 		setIfMissing(d.Commands, VerbFmt, "cargo fmt")
 		setIfMissing(d.Commands, VerbLint, "cargo clippy")
 		setIfMissing(d.Commands, VerbClean, "cargo clean")
+
+	case exists(root, "composer.json"):
+		d.Stack = "php"
+		d.PkgMgr = "composer"
+		if exists(root, "artisan") {
+			d.Frameworks = append(d.Frameworks, "laravel")
+			setIfMissing(d.Commands, VerbTest, "php artisan test")
+			setIfMissing(d.Commands, VerbRun, "php artisan serve")
+			setIfMissing(d.Commands, VerbBuild, "php artisan optimize")
+		} else {
+			setIfMissing(d.Commands, VerbTest, "./vendor/bin/phpunit")
+			setIfMissing(d.Commands, VerbRun, "php -S localhost:8000")
+			setIfMissing(d.Commands, VerbBuild, "composer dump-autoload --optimize")
+		}
+		setIfMissing(d.Commands, VerbDeps, "composer install")
+		setIfMissing(d.Commands, VerbFmt, "./vendor/bin/pint || ./vendor/bin/php-cs-fixer fix .")
+		setIfMissing(d.Commands, VerbLint, "./vendor/bin/phpstan analyse")
+		setIfMissing(d.Commands, VerbClean, "php artisan cache:clear 2>/dev/null; rm -rf vendor")
+
+	case exists(root, "build.zig"):
+		d.Stack = "zig"
+		d.PkgMgr = "zig"
+		setIfMissing(d.Commands, VerbTest, "zig build test")
+		setIfMissing(d.Commands, VerbRun, "zig build run")
+		setIfMissing(d.Commands, VerbBuild, "zig build")
+		setIfMissing(d.Commands, VerbClean, "zig build --help 2>/dev/null; rm -rf zig-out zig-cache .zig-cache")
+
+	case exists(root, "mix.exs"):
+		d.Stack = "elixir"
+		d.PkgMgr = "mix"
+		if exists(root, "config") && exists(root, "lib") {
+			if exists(root, "assets") {
+				d.Frameworks = append(d.Frameworks, "phoenix")
+				setIfMissing(d.Commands, VerbRun, "mix phx.server")
+			}
+		}
+		setIfMissing(d.Commands, VerbTest, "mix test")
+		setIfMissing(d.Commands, VerbRun, "iex -S mix")
+		setIfMissing(d.Commands, VerbBuild, "mix compile")
+		setIfMissing(d.Commands, VerbDeps, "mix deps.get")
+		setIfMissing(d.Commands, VerbFmt, "mix format")
+		setIfMissing(d.Commands, VerbLint, "mix credo")
+		setIfMissing(d.Commands, VerbClean, "mix clean")
 	}
 
 	// Priority 0 (applied last = wins): rex.toml explicit overrides
