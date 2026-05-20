@@ -31,7 +31,7 @@ cd unknown-project
 rex test
 ```
 
-That's it. Works for Go, Node, Python, Rust, Java, Docker, Make, and Just projects.
+That's it. Works for Go, Node, Python, Rust, Java, Ruby, PHP, Zig, Elixir, Docker, Make, and Just projects.
 
 ## Demo
 
@@ -102,6 +102,7 @@ Or download a binary from [Releases](https://github.com/rexrun-dev/rex/releases)
 | `rex fmt` | Format code |
 | `rex lint` | Lint code |
 | `rex clone <url>` | Clone + detect + install deps (URL to ready in one command) |
+| `rex init` | Generate `rex.toml` from detected commands (commit for your team) |
 | `rex doctor` | Diagnose environment issues |
 
 ### Flags
@@ -120,11 +121,34 @@ rex test -- -v -run TestFoo  # pass extra args to underlying command
 | **Node** | npm, pnpm, yarn, bun | `package.json` + lockfile |
 | **Python** | pip, uv, poetry, pipenv | `pyproject.toml`, `requirements.txt`, `setup.py` |
 | **Rust** | cargo | `Cargo.toml` |
+| **PHP** | composer | `composer.json` (detects Laravel via `artisan`) |
+| **Ruby** | bundler | `Gemfile` (detects Rails via `app/` + `config/`) |
+| **Java** | maven, gradle | `pom.xml`, `build.gradle` (uses wrapper if present) |
+| **Zig** | zig | `build.zig` |
+| **Elixir** | mix | `mix.exs` (detects Phoenix via `assets/`) |
 | **Docker** | docker compose | `docker-compose.yml`, `compose.yml` |
 | **Make** | — | `Makefile` |
 | **Just** | — | `Justfile` |
 
 Rex reads existing task runners first. If your project has a Makefile, Justfile, or Taskfile, those take priority.
+
+### Monorepo support
+
+Rex auto-detects monorepos (packages/, apps/, services/ etc.) and shows all sub-projects:
+
+```
+$ rex
+
+  🦖 my-monorepo (monorepo)
+
+  workspace  3 sub-projects detected
+
+    packages/api         → node + pnpm
+    packages/web         → node + pnpm
+    services/auth        → go
+
+  hint: cd into a sub-project, then use rex test
+```
 
 ## How It Works
 
@@ -161,6 +185,14 @@ For repos that want to pin commands explicitly:
 test = "go test -race -count=1 ./..."
 run = "air"
 build = "goreleaser build --snapshot"
+```
+
+Generate one automatically:
+
+```bash
+rex init
+# ✓ created rex.toml (go project)
+# hint: edit commands to customize, then commit for your team
 ```
 
 Rex uses this first when present. Your team always gets the right command.
