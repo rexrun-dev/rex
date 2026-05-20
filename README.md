@@ -5,6 +5,15 @@
 <h3 align="center">run anything, know nothing.</h3>
 
 <p align="center">
+  <a href="https://github.com/avelino/awesome-go"><img src="https://awesome.re/mentioned-badge.svg" alt="Mentioned in Awesome Go"></a>
+  <a href="https://github.com/rexrun-dev/rex/actions"><img src="https://github.com/rexrun-dev/rex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://goreportcard.com/report/github.com/rexrun-dev/rex"><img src="https://goreportcard.com/badge/github.com/rexrun-dev/rex" alt="Go Report Card"></a>
+  <a href="https://app.codecov.io/gh/rexrun-dev/rex"><img src="https://codecov.io/gh/rexrun-dev/rex/branch/main/graph/badge.svg" alt="Coverage"></a>
+  <a href="https://github.com/rexrun-dev/rex/releases"><img src="https://img.shields.io/github/v/release/rexrun-dev/rex" alt="Release"></a>
+  <a href="https://github.com/rexrun-dev/rex/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License"></a>
+</p>
+
+<p align="center">
   <a href="#install">Install</a> •
   <a href="#demo">Demo</a> •
   <a href="#commands">Commands</a> •
