@@ -127,6 +127,55 @@ func Detect(root string) Detection {
 		setIfMissing(d.Commands, VerbFmt, "mix format")
 		setIfMissing(d.Commands, VerbLint, "mix credo")
 		setIfMissing(d.Commands, VerbClean, "mix clean")
+
+	case exists(root, "Gemfile"):
+		d.Stack = "ruby"
+		d.PkgMgr = "bundler"
+		if exists(root, "config") && exists(root, "app") && exists(root, "Rakefile") {
+			d.Frameworks = append(d.Frameworks, "rails")
+			setIfMissing(d.Commands, VerbTest, "bundle exec rails test")
+			setIfMissing(d.Commands, VerbRun, "bundle exec rails server")
+			setIfMissing(d.Commands, VerbBuild, "bundle exec rails assets:precompile")
+			setIfMissing(d.Commands, VerbClean, "bundle exec rails tmp:clear log:clear")
+		} else {
+			setIfMissing(d.Commands, VerbTest, "bundle exec rspec")
+			setIfMissing(d.Commands, VerbRun, "bundle exec ruby main.rb")
+			setIfMissing(d.Commands, VerbBuild, "bundle exec rake build")
+			setIfMissing(d.Commands, VerbClean, "rm -rf tmp pkg")
+		}
+		setIfMissing(d.Commands, VerbDeps, "bundle install")
+		setIfMissing(d.Commands, VerbFmt, "bundle exec rubocop -a")
+		setIfMissing(d.Commands, VerbLint, "bundle exec rubocop")
+
+	case exists(root, "pom.xml"):
+		d.Stack = "java"
+		d.PkgMgr = "maven"
+		mvn := "mvn"
+		if exists(root, "mvnw") || exists(root, "mvnw.cmd") {
+			mvn = "./mvnw"
+		}
+		setIfMissing(d.Commands, VerbTest, mvn+" test")
+		setIfMissing(d.Commands, VerbRun, mvn+" spring-boot:run")
+		setIfMissing(d.Commands, VerbBuild, mvn+" package -DskipTests")
+		setIfMissing(d.Commands, VerbDeps, mvn+" dependency:resolve")
+		setIfMissing(d.Commands, VerbFmt, mvn+" spotless:apply")
+		setIfMissing(d.Commands, VerbLint, mvn+" checkstyle:check")
+		setIfMissing(d.Commands, VerbClean, mvn+" clean")
+
+	case exists(root, "build.gradle"), exists(root, "build.gradle.kts"):
+		d.Stack = "java"
+		d.PkgMgr = "gradle"
+		gradle := "gradle"
+		if exists(root, "gradlew") || exists(root, "gradlew.bat") {
+			gradle = "./gradlew"
+		}
+		setIfMissing(d.Commands, VerbTest, gradle+" test")
+		setIfMissing(d.Commands, VerbRun, gradle+" bootRun")
+		setIfMissing(d.Commands, VerbBuild, gradle+" build -x test")
+		setIfMissing(d.Commands, VerbDeps, gradle+" dependencies")
+		setIfMissing(d.Commands, VerbFmt, gradle+" spotlessApply")
+		setIfMissing(d.Commands, VerbLint, gradle+" check")
+		setIfMissing(d.Commands, VerbClean, gradle+" clean")
 	}
 
 	// Priority 0 (applied last = wins): rex.toml explicit overrides

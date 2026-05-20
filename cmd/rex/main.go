@@ -53,6 +53,8 @@ func run(args []string) error {
 			dir = args[2]
 		}
 		return runClone(args[1], dir)
+	case "init":
+		return runInit()
 	}
 
 	verb := detect.Verb(args[0])
@@ -66,6 +68,16 @@ func showOverview() error {
 		return err
 	}
 	d := detect.Detect(root)
+
+	// If no stack at root, check for monorepo
+	if d.Stack == "" {
+		subs := detect.DetectMonorepo(root)
+		if len(subs) > 0 {
+			display.MonorepoOverview(root, subs)
+			return nil
+		}
+	}
+
 	display.Overview(root, d)
 	return nil
 }
@@ -211,6 +223,32 @@ func runFresh() error {
 	return nil
 }
 
+func runInit() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	// Check if rex.toml already exists
+	if _, err := os.Stat(filepath.Join(root, "rex.toml")); err == nil {
+		return fmt.Errorf("rex.toml already exists in this directory")
+	}
+
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no project detected — nothing to initialize")
+	}
+
+	content := detect.GenerateConfig(d)
+	if err := os.WriteFile(filepath.Join(root, "rex.toml"), []byte(content), 0644); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s created rex.toml (%s project)\n", display.Green("✓"), d.Stack)
+	fmt.Printf("%s edit commands to customize, then commit for your team\n", display.Dim("hint:"))
+	return nil
+}
+
 func runClone(url, dir string) error {
 	// Determine target directory
 	if dir == "" {
@@ -265,6 +303,7 @@ Usage:
   rex fmt          format code
   rex lint         lint code
   rex clone <url>  clone + detect + install deps
+  rex init         generate rex.toml from detected commands
   rex doctor       diagnose environment
 
 Flags:

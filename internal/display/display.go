@@ -93,3 +93,29 @@ func isFirstRun(root string) bool {
 	_, err := os.Stat(filepath.Join(root, ".rex"))
 	return err != nil
 }
+
+// MonorepoOverview prints detected sub-projects in a monorepo.
+func MonorepoOverview(root string, subs []detect.SubProject) {
+	name := filepath.Base(root)
+
+	fmt.Println()
+	fmt.Printf("  %s %s %s\n", Orange("🦖"), Bold(name), Dim("(monorepo)"))
+	fmt.Println()
+	fmt.Printf("  %s  %d sub-projects detected\n", Dim("workspace"), len(subs))
+	fmt.Println()
+
+	for _, sub := range subs {
+		stack := sub.Detection.Stack
+		if sub.Detection.PkgMgr != "" && sub.Detection.PkgMgr != stack {
+			stack += " + " + sub.Detection.PkgMgr
+		}
+		fmt.Printf("    %s %s %s\n",
+			Cyan(fmt.Sprintf("%-20s", sub.Path)),
+			Dim("→"),
+			stack,
+		)
+	}
+	fmt.Println()
+	fmt.Printf("  %s cd into a sub-project, then use %s\n", Dim("hint:"), Cyan("rex test"))
+	fmt.Println()
+}
