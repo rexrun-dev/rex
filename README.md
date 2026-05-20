@@ -26,6 +26,11 @@ That's it. Works for Go, Node, Python, Rust, Java, Docker, Make, and Just projec
 
 ## Demo
 
+https://github.com/rexrun-dev/rex/releases/download/v0.2.0/demo.mp4
+
+<details>
+<summary>Text version</summary>
+
 ```
 $ cd some-go-project/
 $ rex
@@ -64,6 +69,8 @@ $ rex
     rex clean  → rm -rf node_modules dist .next .nuxt build out
 ```
 
+</details>
+
 ## Install
 
 ```bash
@@ -85,6 +92,7 @@ Or download a binary from [Releases](https://github.com/rexrun-dev/rex/releases)
 | `rex fresh` | clean → deps → build (the "I pulled and it broke" fix) |
 | `rex fmt` | Format code |
 | `rex lint` | Lint code |
+| `rex clone <url>` | Clone + detect + install deps (URL to ready in one command) |
 | `rex doctor` | Diagnose environment issues |
 
 ### Flags
