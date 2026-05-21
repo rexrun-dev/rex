@@ -195,6 +195,65 @@
         }
         .cta .secondary:hover { color: var(--text); }
 
+        /* Try it */
+        .try-it {
+            text-align: center;
+            margin: 64px 0;
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+        }
+        .try-it h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+        .try-subtitle {
+            color: var(--dim);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+        .try-input-wrap {
+            display: flex;
+            gap: 8px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .try-input-wrap input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .try-input-wrap input:focus {
+            outline: none;
+            border-color: var(--orange);
+        }
+        .try-input-wrap button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            background: var(--orange);
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .try-input-wrap button:hover { opacity: 0.9; }
+        .try-result {
+            margin-top: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
         /* Footer */
         footer {
             border-top: 1px solid var(--border);
@@ -281,10 +340,27 @@
                 <span class="stack-badge">Node.js</span>
                 <span class="stack-badge">Python</span>
                 <span class="stack-badge">Rust</span>
+                <span class="stack-badge">PHP</span>
+                <span class="stack-badge">Ruby</span>
                 <span class="stack-badge">Java</span>
-                <span class="stack-badge">Docker</span>
+                <span class="stack-badge">Zig</span>
+                <span class="stack-badge">Elixir</span>
                 <span class="stack-badge">Makefile</span>
                 <span class="stack-badge">Justfile</span>
+            </div>
+        </section>
+
+        <!-- Try it: repo detector -->
+        <section class="try-it" id="try">
+            <h2>Try it — paste any GitHub repo</h2>
+            <p class="try-subtitle">See what rex would detect without installing anything</p>
+            <div class="try-input-wrap">
+                <input type="text" id="repoUrl" placeholder="https://github.com/gin-gonic/gin" />
+                <button onclick="detectRepo()">Detect</button>
+            </div>
+            <div id="tryResult" class="try-result" style="display:none;"></div>
+            <div id="tryShare" style="display:none; text-align:center; margin-top:12px;">
+                <a id="shareLink" href="#" target="_blank" style="color:var(--orange);font-size:0.85rem;">Share this result on Twitter/X</a>
             </div>
         </section>
 
@@ -297,5 +373,118 @@
     <footer>
         <p>Built with 🦖 by <a href="https://github.com/rexrun-dev">rexrun-dev</a> · <a href="mailto:hello@rexrun.dev">hello@rexrun.dev</a></p>
     </footer>
+
+    <script>
+    const DETECTIONS = {
+        'go.mod': { stack: 'go', mgr: 'go modules', test: 'go test ./...', run: 'go run .', build: 'go build ./...', deps: 'go mod download' },
+        'package.json': { stack: 'node', mgr: 'npm', test: 'npm test', run: 'npm run dev', build: 'npm run build', deps: 'npm install' },
+        'Cargo.toml': { stack: 'rust', mgr: 'cargo', test: 'cargo test', run: 'cargo run', build: 'cargo build', deps: 'cargo fetch' },
+        'pyproject.toml': { stack: 'python', mgr: 'pip', test: 'pytest', run: 'python -m app', build: 'python -m build', deps: 'pip install -r requirements.txt' },
+        'requirements.txt': { stack: 'python', mgr: 'pip', test: 'pytest', run: 'python main.py', build: 'python -m build', deps: 'pip install -r requirements.txt' },
+        'composer.json': { stack: 'php', mgr: 'composer', test: 'vendor/bin/phpunit', run: 'php -S localhost:8000', build: 'composer dump-autoload', deps: 'composer install' },
+        'Gemfile': { stack: 'ruby', mgr: 'bundler', test: 'bundle exec rspec', run: 'bundle exec rails s', build: 'bundle exec rake build', deps: 'bundle install' },
+        'pom.xml': { stack: 'java', mgr: 'maven', test: 'mvn test', run: 'mvn spring-boot:run', build: 'mvn package', deps: 'mvn dependency:resolve' },
+        'build.gradle': { stack: 'java', mgr: 'gradle', test: './gradlew test', run: './gradlew bootRun', build: './gradlew build', deps: './gradlew dependencies' },
+        'build.zig': { stack: 'zig', mgr: 'zig', test: 'zig build test', run: 'zig build run', build: 'zig build', deps: '' },
+        'mix.exs': { stack: 'elixir', mgr: 'mix', test: 'mix test', run: 'mix phx.server', build: 'mix compile', deps: 'mix deps.get' },
+        'Makefile': { stack: 'make', mgr: '', test: 'make test', run: 'make run', build: 'make build', deps: 'make deps' },
+        'Justfile': { stack: 'just', mgr: '', test: 'just test', run: 'just run', build: 'just build', deps: 'just deps' },
+    };
+
+    // Extra lockfile detection
+    const LOCKFILES = {
+        'pnpm-lock.yaml': { mgr: 'pnpm', test: 'pnpm test', run: 'pnpm run dev', build: 'pnpm run build', deps: 'pnpm install' },
+        'yarn.lock': { mgr: 'yarn', test: 'yarn test', run: 'yarn dev', build: 'yarn build', deps: 'yarn install' },
+        'bun.lockb': { mgr: 'bun', test: 'bun test', run: 'bun run dev', build: 'bun run build', deps: 'bun install' },
+        'bun.lock': { mgr: 'bun', test: 'bun test', run: 'bun run dev', build: 'bun run build', deps: 'bun install' },
+        'poetry.lock': { mgr: 'poetry', test: 'poetry run pytest', run: 'poetry run python main.py', build: 'poetry build', deps: 'poetry install' },
+        'uv.lock': { mgr: 'uv', test: 'uv run pytest', run: 'uv run python main.py', build: 'uv build', deps: 'uv sync' },
+    };
+
+    async function detectRepo() {
+        const input = document.getElementById('repoUrl').value.trim();
+        const result = document.getElementById('tryResult');
+        const share = document.getElementById('tryShare');
+
+        let owner, repo;
+        try {
+            const url = new URL(input.startsWith('http') ? input : 'https://github.com/' + input);
+            const parts = url.pathname.split('/').filter(Boolean);
+            owner = parts[0]; repo = parts[1];
+        } catch(e) {
+            const parts = input.split('/');
+            if (parts.length >= 2) { owner = parts[0]; repo = parts[1]; }
+            else { result.innerHTML = '<span style="color:#ef4444">Invalid URL. Use: https://github.com/owner/repo</span>'; result.style.display='block'; return; }
+        }
+
+        result.innerHTML = '<span style="color:var(--dim)">Scanning ' + owner + '/' + repo + '...</span>';
+        result.style.display = 'block';
+        share.style.display = 'none';
+
+        try {
+            const res = await fetch('https://api.github.com/repos/' + owner + '/' + repo + '/contents/');
+            if (!res.ok) throw new Error('Repo not found');
+            const files = await res.json();
+            const names = files.map(f => f.name);
+
+            let detection = null;
+            let lockfileOverride = null;
+
+            // Check lockfiles first
+            for (const [lf, det] of Object.entries(LOCKFILES)) {
+                if (names.includes(lf)) { lockfileOverride = det; break; }
+            }
+
+            // Check main detection files
+            for (const [file, det] of Object.entries(DETECTIONS)) {
+                if (names.includes(file)) { detection = {...det}; break; }
+            }
+
+            if (!detection) {
+                result.innerHTML = '<span style="color:var(--dim)">No known stack detected in ' + owner + '/' + repo + '</span>';
+                return;
+            }
+
+            // Apply lockfile override for node projects
+            if (lockfileOverride && detection.stack === 'node') {
+                detection.mgr = lockfileOverride.mgr;
+                detection.test = lockfileOverride.test;
+                detection.run = lockfileOverride.run;
+                detection.build = lockfileOverride.build;
+                detection.deps = lockfileOverride.deps;
+            }
+
+            const mgrLabel = detection.mgr ? ' + ' + detection.mgr : '';
+            let html = '<div style="font-family:monospace;line-height:2">';
+            html += '<span style="color:var(--dim)">$</span> <span>rex</span><br>';
+            html += '<br>';
+            html += '  <span>🦖</span> <strong>' + repo + '</strong><br>';
+            html += '<br>';
+            html += '  <span style="color:var(--dim)">stack</span>  ' + detection.stack + mgrLabel + '<br>';
+            html += '<br>';
+            html += '  <span style="color:var(--dim)">commands</span><br>';
+            if (detection.test) html += '    <span style="color:var(--cyan)">rex test</span>  <span style="color:var(--dim)">→</span> ' + detection.test + '<br>';
+            if (detection.run) html += '    <span style="color:var(--cyan)">rex run</span>   <span style="color:var(--dim)">→</span> ' + detection.run + '<br>';
+            if (detection.build) html += '    <span style="color:var(--cyan)">rex build</span> <span style="color:var(--dim)">→</span> ' + detection.build + '<br>';
+            if (detection.deps) html += '    <span style="color:var(--cyan)">rex deps</span>  <span style="color:var(--dim)">→</span> ' + detection.deps + '<br>';
+            html += '</div>';
+
+            result.innerHTML = html;
+
+            // Share button
+            const tweet = encodeURIComponent('rex detected my repo ' + owner + '/' + repo + ' as ' + detection.stack + mgrLabel + ' — zero config, one command.\n\nhttps://github.com/rexrun-dev/rex');
+            document.getElementById('shareLink').href = 'https://twitter.com/intent/tweet?text=' + tweet;
+            share.style.display = 'block';
+
+        } catch(e) {
+            result.innerHTML = '<span style="color:#ef4444">Error: ' + e.message + '</span>';
+        }
+    }
+
+    // Enter key
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('repoUrl').addEventListener('keydown', e => { if (e.key === 'Enter') detectRepo(); });
+    });
+    </script>
 </body>
 </html>
