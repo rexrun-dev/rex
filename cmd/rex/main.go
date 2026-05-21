@@ -8,11 +8,13 @@ import (
 	"runtime"
 	"strings"
 
+	"rexrun.dev/rex/internal/completion"
 	"rexrun.dev/rex/internal/detect"
 	"rexrun.dev/rex/internal/display"
+	"rexrun.dev/rex/internal/envfile"
 )
 
-const version = "0.1.0"
+const version = "0.3.0"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -55,6 +57,12 @@ func run(args []string) error {
 		return runClone(args[1], dir)
 	case "init":
 		return runInit()
+	case "completion":
+		shell := "bash"
+		if len(args) > 1 {
+			shell = args[1]
+		}
+		return runCompletion(shell)
 	}
 
 	verb := detect.Verb(args[0])
@@ -117,6 +125,10 @@ func execute(verb detect.Verb, extra []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Load .env file before executing any command
+	envfile.Load(root)
+
 	d := detect.Detect(root)
 	cmd, ok := d.Commands[verb]
 	if !ok {
@@ -286,6 +298,20 @@ func runClone(url, dir string) error {
 	}
 
 	fmt.Printf("\n%s ready! cd %s && rex run\n", display.Green("✓"), dir)
+	return nil
+}
+
+func runCompletion(shell string) error {
+	switch shell {
+	case "bash":
+		fmt.Print(completion.Bash())
+	case "zsh":
+		fmt.Print(completion.Zsh())
+	case "fish":
+		fmt.Print(completion.Fish())
+	default:
+		return fmt.Errorf("unsupported shell: %s (use bash, zsh, or fish)", shell)
+	}
 	return nil
 }
 
