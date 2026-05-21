@@ -33,6 +33,18 @@ changelog:
       - "^test:"
       - "^ci:"
 
+brews:
+  - repository:
+      owner: rexrun-dev
+      name: homebrew-tap
+    homepage: "https://rexrun.dev"
+    description: "Zero-config universal project runner"
+    license: "Apache-2.0"
+    install: |
+      bin.install "rex"
+    test: |
+      assert_match "rex", shell_output("#{bin}/rex -v")
+
 release:
   github:
     owner: rexrun-dev
@@ -44,6 +56,8 @@ release:
     
     ### Install
     ```bash
+    brew tap rexrun-dev/tap && brew install rex
+    # or
     go install rexrun.dev/rex/cmd/rex@{{ .Version }}
     ```
     Or download the binary for your platform below.
