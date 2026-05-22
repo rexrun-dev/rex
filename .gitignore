@@ -13,3 +13,6 @@ Thumbs.db
 docs/
 .wrangler/
 ISSUES_TO_CREATE.md
+
+coverage.out
+coverage
