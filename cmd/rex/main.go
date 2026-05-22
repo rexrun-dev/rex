@@ -13,6 +13,7 @@ import (
 	"rexrun.dev/rex/internal/detect"
 	"rexrun.dev/rex/internal/display"
 	"rexrun.dev/rex/internal/envfile"
+	"rexrun.dev/rex/internal/generate"
 	"rexrun.dev/rex/internal/watcher"
 )
 
@@ -71,6 +72,8 @@ func run(args []string) error {
 			verb = detect.Verb(args[1])
 		}
 		return runWatch(verb)
+	case "ci":
+		return runCI()
 	}
 
 	verb := detect.Verb(args[0])
@@ -309,6 +312,35 @@ func runClone(url, dir string) error {
 	return nil
 }
 
+func runCI() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no stack detected — cannot generate CI config")
+	}
+
+	yml := generate.CI(&d)
+	dir := filepath.Join(root, ".github", "workflows")
+	path := filepath.Join(dir, "ci.yml")
+
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("ci.yml already exists — remove it first or edit manually")
+	}
+
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(path, []byte(yml), 0o644); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s created .github/workflows/ci.yml (%s project)\n", display.Green("✓"), d.Stack)
+	return nil
+}
+
 func runWatch(verb detect.Verb) error {
 	root, err := os.Getwd()
 	if err != nil {
@@ -377,6 +409,7 @@ Usage:
   rex fmt          format code
   rex lint         lint code
   rex watch [verb] watch files and re-run on change (default: test)
+  rex ci           generate GitHub Actions CI for your stack
   rex clone <url>  clone + detect + install deps
   rex init         generate rex.toml from detected commands
   rex doctor       diagnose environment

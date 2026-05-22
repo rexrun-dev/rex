@@ -106,6 +106,7 @@ Or download a binary from [Releases](https://github.com/rexrun-dev/rex/releases)
 | `rex fmt` | Format code |
 | `rex lint` | Lint code |
 | `rex watch [verb]` | Watch files and re-run on change (default: test) |
+| `rex ci` | Generate GitHub Actions CI workflow for your stack |
 | `rex clone <url>` | Clone + detect + install deps (URL to ready in one command) |
 | `rex init` | Generate `rex.toml` from detected commands (commit for your team) |
 | `rex completion` | Generate shell completions (bash/zsh/fish) |
