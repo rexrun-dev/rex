@@ -1,5 +1,5 @@
 name: 'rex - Universal Project Runner'
-description: 'Zero-config CLI that detects your stack and runs the right command. Use rex test, rex build, rex deps in any repo.'
+description: 'Zero-config CI step that detects your stack and runs the right command. Replace 10 lines of YAML with one step.'
 author: 'rexrun-dev'
 branding:
   icon: 'terminal'
@@ -7,13 +7,17 @@ branding:
 
 inputs:
   command:
-    description: 'The rex command to run (test, build, run, deps, clean, fresh, fmt, lint, doctor)'
+    description: 'The rex command to run (test, build, run, deps, clean, fresh, fmt, lint)'
     required: true
     default: 'test'
   version:
-    description: 'Version of rex to install'
+    description: 'Version of rex to install (e.g. v0.4.0). Default: latest.'
     required: false
     default: 'latest'
+  args:
+    description: 'Extra arguments to pass after the command'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -21,8 +25,21 @@ runs:
     - name: Install rex
       shell: bash
       run: |
-        go install rexrun.dev/rex/cmd/rex@${{ inputs.version }}
-    - name: Run rex
+        set -euo pipefail
+        VERSION="${{ inputs.version }}"
+        if [ "$VERSION" = "latest" ]; then
+          VERSION=$(curl -sL https://api.github.com/repos/rexrun-dev/rex/releases/latest | grep tag_name | cut -d'"' -f4)
+        fi
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        case "$ARCH" in
+          x86_64) ARCH="amd64" ;;
+          aarch64|arm64) ARCH="arm64" ;;
+        esac
+        URL="https://github.com/rexrun-dev/rex/releases/download/${VERSION}/rex_${VERSION#v}_${OS}_${ARCH}.tar.gz"
+        curl -sL "$URL" | tar xz -C /usr/local/bin rex
+        echo "rex ${VERSION} installed"
+    - name: Run rex ${{ inputs.command }}
       shell: bash
       run: |
-        rex ${{ inputs.command }}
+        rex ${{ inputs.command }} ${{ inputs.args }}
