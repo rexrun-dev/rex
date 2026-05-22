@@ -83,6 +83,10 @@ $ rex
 ## Install
 
 ```bash
+# Homebrew (macOS/Linux)
+brew tap rexrun-dev/tap && brew install rex
+
+# Go
 go install rexrun.dev/rex/cmd/rex@latest
 ```
 
@@ -101,8 +105,10 @@ Or download a binary from [Releases](https://github.com/rexrun-dev/rex/releases)
 | `rex fresh` | clean → deps → build (the "I pulled and it broke" fix) |
 | `rex fmt` | Format code |
 | `rex lint` | Lint code |
+| `rex watch [verb]` | Watch files and re-run on change (default: test) |
 | `rex clone <url>` | Clone + detect + install deps (URL to ready in one command) |
 | `rex init` | Generate `rex.toml` from detected commands (commit for your team) |
+| `rex completion` | Generate shell completions (bash/zsh/fish) |
 | `rex doctor` | Diagnose environment issues |
 
 ### Flags
@@ -175,6 +181,8 @@ If a Makefile defines a `test` target, `rex test` runs `make test` — even in a
 - **Fast** — single binary, <50ms startup, no network calls
 - **Composable** — correct exit codes, works in CI pipelines
 - **Non-invasive** — creates no files, modifies nothing
+- **Watch mode** — `rex watch` re-runs on file change
+- **`.env` loading** — auto-loads `.env` before commands
 
 ## Optional: `rex.toml`
 

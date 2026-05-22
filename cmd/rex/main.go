@@ -7,11 +7,13 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"rexrun.dev/rex/internal/completion"
 	"rexrun.dev/rex/internal/detect"
 	"rexrun.dev/rex/internal/display"
 	"rexrun.dev/rex/internal/envfile"
+	"rexrun.dev/rex/internal/watcher"
 )
 
 const version = "0.3.0"
@@ -63,6 +65,12 @@ func run(args []string) error {
 			shell = args[1]
 		}
 		return runCompletion(shell)
+	case "watch":
+		verb := detect.VerbTest
+		if len(args) > 1 {
+			verb = detect.Verb(args[1])
+		}
+		return runWatch(verb)
 	}
 
 	verb := detect.Verb(args[0])
@@ -301,6 +309,46 @@ func runClone(url, dir string) error {
 	return nil
 }
 
+func runWatch(verb detect.Verb) error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	envfile.Load(root)
+
+	d := detect.Detect(root)
+	cmd, ok := d.Commands[verb]
+	if !ok {
+		return fmt.Errorf("no command detected for %q", verb)
+	}
+
+	interval := watcher.DetectInterval(root)
+	fileCount := watcher.FileCount(root)
+
+	fmt.Println()
+	fmt.Printf("  %s watching %s (%s)\n", display.Orange("🦖"), display.Bold(filepath.Base(root)), d.Stack)
+	fmt.Printf("  %s  %s\n", display.Dim("files"), fileCount)
+	fmt.Printf("  %s  rex %s → %s\n", display.Dim("run"), display.Cyan(string(verb)), cmd)
+	fmt.Printf("  %s  %s\n", display.Dim("poll"), interval)
+	fmt.Println()
+	fmt.Printf("  %s %s\n", display.Dim("waiting for changes..."), display.Dim("(ctrl+c to stop)"))
+	fmt.Println()
+
+	// Run once immediately
+	fmt.Printf("  %s %s %s\n", display.Dim(watcher.FormatTime(time.Now())), display.Arrow(), cmd)
+	_ = execCommand(cmd, root)
+
+	watcher.Watch(root, interval, func() {
+		fmt.Println()
+		fmt.Printf("  %s %s detected, re-running...\n", display.Dim(watcher.FormatTime(time.Now())), display.Orange("change"))
+		fmt.Printf("  %s %s\n", display.Arrow(), cmd)
+		_ = execCommand(cmd, root)
+	})
+
+	return nil
+}
+
 func runCompletion(shell string) error {
 	switch shell {
 	case "bash":
@@ -328,6 +376,7 @@ Usage:
   rex fresh        clean + deps + build
   rex fmt          format code
   rex lint         lint code
+  rex watch [verb] watch files and re-run on change (default: test)
   rex clone <url>  clone + detect + install deps
   rex init         generate rex.toml from detected commands
   rex doctor       diagnose environment

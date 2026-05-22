@@ -156,6 +156,199 @@ func TestDetectJustfile(t *testing.T) {
 	}
 }
 
+func TestDetectRuby(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "Gemfile"), "source 'https://rubygems.org'\n")
+
+	d := Detect(root)
+
+	if d.Stack != "ruby" {
+		t.Fatalf("expected stack=ruby, got %q", d.Stack)
+	}
+	if d.PkgMgr != "bundler" {
+		t.Fatalf("expected pkgmgr=bundler, got %q", d.PkgMgr)
+	}
+	if d.Commands[VerbTest] != "bundle exec rspec" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+	if d.Commands[VerbDeps] != "bundle install" {
+		t.Fatalf("deps cmd: %q", d.Commands[VerbDeps])
+	}
+}
+
+func TestDetectRails(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "Gemfile"), "source 'https://rubygems.org'\ngem 'rails'\n")
+	os.MkdirAll(filepath.Join(root, "app"), 0o755)
+	os.MkdirAll(filepath.Join(root, "config"), 0o755)
+	writeFile(t, filepath.Join(root, "Rakefile"), "")
+
+	d := Detect(root)
+
+	if d.Stack != "ruby" {
+		t.Fatalf("expected stack=ruby, got %q", d.Stack)
+	}
+	if len(d.Frameworks) == 0 || d.Frameworks[0] != "rails" {
+		t.Fatalf("expected rails framework, got %v", d.Frameworks)
+	}
+	if d.Commands[VerbTest] != "bundle exec rails test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+	if d.Commands[VerbRun] != "bundle exec rails server" {
+		t.Fatalf("run cmd: %q", d.Commands[VerbRun])
+	}
+}
+
+func TestDetectJavaMaven(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "pom.xml"), "<project></project>")
+
+	d := Detect(root)
+
+	if d.Stack != "java" {
+		t.Fatalf("expected stack=java, got %q", d.Stack)
+	}
+	if d.PkgMgr != "maven" {
+		t.Fatalf("expected pkgmgr=maven, got %q", d.PkgMgr)
+	}
+	if d.Commands[VerbTest] != "mvn test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+	if d.Commands[VerbClean] != "mvn clean" {
+		t.Fatalf("clean cmd: %q", d.Commands[VerbClean])
+	}
+}
+
+func TestDetectJavaMavenWrapper(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "pom.xml"), "<project></project>")
+	writeFile(t, filepath.Join(root, "mvnw"), "#!/bin/sh\n")
+
+	d := Detect(root)
+
+	if d.Commands[VerbTest] != "./mvnw test" {
+		t.Fatalf("expected mvnw, got %q", d.Commands[VerbTest])
+	}
+}
+
+func TestDetectJavaGradle(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "build.gradle"), "apply plugin: 'java'")
+
+	d := Detect(root)
+
+	if d.Stack != "java" {
+		t.Fatalf("expected stack=java, got %q", d.Stack)
+	}
+	if d.PkgMgr != "gradle" {
+		t.Fatalf("expected pkgmgr=gradle, got %q", d.PkgMgr)
+	}
+	if d.Commands[VerbTest] != "gradle test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+}
+
+func TestDetectJavaGradleWrapper(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "build.gradle"), "apply plugin: 'java'")
+	writeFile(t, filepath.Join(root, "gradlew"), "#!/bin/sh\n")
+
+	d := Detect(root)
+
+	if d.Commands[VerbTest] != "./gradlew test" {
+		t.Fatalf("expected gradlew, got %q", d.Commands[VerbTest])
+	}
+}
+
+func TestDetectPHP(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "composer.json"), "{}")
+
+	d := Detect(root)
+
+	if d.Stack != "php" {
+		t.Fatalf("expected stack=php, got %q", d.Stack)
+	}
+	if d.PkgMgr != "composer" {
+		t.Fatalf("expected pkgmgr=composer, got %q", d.PkgMgr)
+	}
+	if d.Commands[VerbDeps] != "composer install" {
+		t.Fatalf("deps cmd: %q", d.Commands[VerbDeps])
+	}
+}
+
+func TestDetectLaravel(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "composer.json"), "{}")
+	writeFile(t, filepath.Join(root, "artisan"), "#!/usr/bin/env php\n")
+
+	d := Detect(root)
+
+	if d.Stack != "php" {
+		t.Fatalf("expected stack=php, got %q", d.Stack)
+	}
+	if len(d.Frameworks) == 0 || d.Frameworks[0] != "laravel" {
+		t.Fatalf("expected laravel framework, got %v", d.Frameworks)
+	}
+	if d.Commands[VerbTest] != "php artisan test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+}
+
+func TestDetectZig(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "build.zig"), "const std = @import(\"std\");\n")
+
+	d := Detect(root)
+
+	if d.Stack != "zig" {
+		t.Fatalf("expected stack=zig, got %q", d.Stack)
+	}
+	if d.Commands[VerbTest] != "zig build test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+	if d.Commands[VerbBuild] != "zig build" {
+		t.Fatalf("build cmd: %q", d.Commands[VerbBuild])
+	}
+}
+
+func TestDetectElixir(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "mix.exs"), "defmodule MyApp do\nend\n")
+
+	d := Detect(root)
+
+	if d.Stack != "elixir" {
+		t.Fatalf("expected stack=elixir, got %q", d.Stack)
+	}
+	if d.PkgMgr != "mix" {
+		t.Fatalf("expected pkgmgr=mix, got %q", d.PkgMgr)
+	}
+	if d.Commands[VerbTest] != "mix test" {
+		t.Fatalf("test cmd: %q", d.Commands[VerbTest])
+	}
+	if d.Commands[VerbDeps] != "mix deps.get" {
+		t.Fatalf("deps cmd: %q", d.Commands[VerbDeps])
+	}
+}
+
+func TestDetectElixirPhoenix(t *testing.T) {
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "mix.exs"), "defmodule MyApp do\nend\n")
+	os.MkdirAll(filepath.Join(root, "assets"), 0o755)
+	os.MkdirAll(filepath.Join(root, "config"), 0o755)
+	os.MkdirAll(filepath.Join(root, "lib"), 0o755)
+
+	d := Detect(root)
+
+	if len(d.Frameworks) == 0 || d.Frameworks[0] != "phoenix" {
+		t.Fatalf("expected phoenix framework, got %v", d.Frameworks)
+	}
+	if d.Commands[VerbRun] != "mix phx.server" {
+		t.Fatalf("run cmd: %q", d.Commands[VerbRun])
+	}
+}
+
 func TestDetectEmpty(t *testing.T) {
 	root := t.TempDir()
 
