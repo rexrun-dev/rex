@@ -17,7 +17,7 @@ import (
 	"rexrun.dev/rex/internal/watcher"
 )
 
-const version = "0.3.0"
+const version = "0.5.0"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -74,6 +74,14 @@ func run(args []string) error {
 		return runWatch(verb)
 	case "ci":
 		return runCI()
+	case "docker":
+		return runDocker()
+	case "compose":
+		return runCompose()
+	case "stats":
+		return runStats()
+	case "badge":
+		return runBadge()
 	}
 
 	verb := detect.Verb(args[0])
@@ -341,6 +349,85 @@ func runCI() error {
 	return nil
 }
 
+func runDocker() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no stack detected — cannot generate Dockerfile")
+	}
+
+	df := generate.Dockerfile(&d)
+	path := filepath.Join(root, "Dockerfile")
+
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("Dockerfile already exists — remove it first")
+	}
+	if err := os.WriteFile(path, []byte(df), 0o644); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s created Dockerfile (%s project, multi-stage build)\n", display.Green("✓"), d.Stack)
+	return nil
+}
+
+func runCompose() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no stack detected — cannot generate docker-compose.yml")
+	}
+
+	yml := generate.Compose(&d)
+	path := filepath.Join(root, "docker-compose.yml")
+
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("docker-compose.yml already exists — remove it first")
+	}
+	if err := os.WriteFile(path, []byte(yml), 0o644); err != nil {
+		return err
+	}
+
+	fmt.Printf("%s created docker-compose.yml (%s project)\n", display.Green("✓"), d.Stack)
+	return nil
+}
+
+func runStats() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no stack detected")
+	}
+
+	fmt.Print(generate.Stats(&d, root))
+	return nil
+}
+
+func runBadge() error {
+	root, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	d := detect.Detect(root)
+	if d.Stack == "" {
+		return fmt.Errorf("no stack detected — cannot generate badge")
+	}
+
+	badge := generate.Badge(&d)
+	fmt.Println(badge)
+	fmt.Println()
+	fmt.Printf("%s paste this into your README.md\n", display.Dim("→"))
+	return nil
+}
+
 func runWatch(verb detect.Verb) error {
 	root, err := os.Getwd()
 	if err != nil {
@@ -410,6 +497,10 @@ Usage:
   rex lint         lint code
   rex watch [verb] watch files and re-run on change (default: test)
   rex ci           generate GitHub Actions CI for your stack
+  rex docker       generate Dockerfile (multi-stage, optimized)
+  rex compose      generate docker-compose.yml
+  rex stats        show project report (files, lines, size)
+  rex badge        generate README badge markdown
   rex clone <url>  clone + detect + install deps
   rex init         generate rex.toml from detected commands
   rex doctor       diagnose environment

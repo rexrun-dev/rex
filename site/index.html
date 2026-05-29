@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>rex — run anything, know nothing.</title>
-    <meta name="description" content="Zero-config universal project runner. Detects your stack and runs the right command. No README reading. No memorizing.">
-    <meta name="keywords" content="cli, developer tools, task runner, zero config, universal runner, go, node, python, rust">
+    <title>rex — Universal Project Runner | Zero Config CI for Go, Node, Python, Rust &amp; more</title>
+    <meta name="description" content="One command works in any repo. Auto-detects your stack and runs tests, builds, and more. GitHub Action on Marketplace. Supports Go, Node, Python, Rust, Java, Ruby, PHP, Zig, Elixir.">
+    <meta name="keywords" content="universal project runner, zero config CLI, GitHub Action, task runner, go, node, python, rust, java, ruby, php, zig, elixir, CI/CD, developer tools, productivity">
     
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://rexrun.dev">
-    <meta property="og:title" content="rex — run anything, know nothing.">
-    <meta property="og:description" content="Zero-config universal project runner. rex test in any repo, without reading the README.">
+    <meta property="og:title" content="rex — One command works in any repo">
+    <meta property="og:description" content="Universal project runner. Auto-detects Go, Node, Python, Rust, Java, Ruby, PHP, Zig, Elixir. GitHub Action on Marketplace.">
     <meta property="og:image" content="https://rexrun.dev/social-preview.png">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="rex — run anything, know nothing.">
-    <meta name="twitter:description" content="Zero-config universal project runner. rex test in any repo.">
+    <meta name="twitter:title" content="rex — One command works in any repo">
+    <meta name="twitter:description" content="Universal project runner. Auto-detects stack, runs tests/builds. GitHub Action. Go, Node, Python, Rust, Java, Ruby, PHP, Zig, Elixir.">
     <meta name="twitter:image" content="https://rexrun.dev/social-preview.png">
 
     <!-- Go vanity imports -->
@@ -263,6 +263,73 @@
             font-size: 0.8rem;
         }
         footer a { color: var(--orange); text-decoration: none; }
+
+        /* Interactive demo */
+        .interactive-demo {
+            text-align: center;
+            margin: 64px 0;
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+        }
+        .interactive-demo h2 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        .stack-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 24px 0;
+        }
+        .stack-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .stack-btn:hover {
+            border-color: var(--orange);
+        }
+        .stack-btn.active {
+            background: var(--orange-glow);
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+        .term-controls {
+            margin-top: 16px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        .term-controls button {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .term-controls button:hover {
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+        .term-input-line {
+            margin-top: 4px;
+        }
+        .term-cursor {
+            color: var(--orange);
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -303,6 +370,38 @@
 <span class="success">ok</span>  <span class="output">github.com/gin-gonic/gin   3.1s</span>
 <span class="success">✓ 498 tests passed</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- Interactive Terminal Demo -->
+        <section class="interactive-demo" id="interactive">
+            <h2>Try rex in your browser</h2>
+            <p class="try-subtitle">Pick a project type and watch rex detect it</p>
+            <div class="stack-selector">
+                <button class="stack-btn active" onclick="setStack('go')">Go</button>
+                <button class="stack-btn" onclick="setStack('node')">Node</button>
+                <button class="stack-btn" onclick="setStack('rust')">Rust</button>
+                <button class="stack-btn" onclick="setStack('python')">Python</button>
+                <button class="stack-btn" onclick="setStack('ruby')">Ruby</button>
+                <button class="stack-btn" onclick="setStack('zig')">Zig</button>
+            </div>
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot"></div>
+                    <div class="terminal-dot"></div>
+                    <div class="terminal-dot"></div>
+                </div>
+                <div class="terminal-body" id="interactiveTerminal">
+                    <div id="termOutput"></div>
+                    <div class="term-input-line">
+                        <span class="prompt">$</span>
+                        <span id="termCursor" class="term-cursor">|</span>
+                    </div>
+                </div>
+            </div>
+            <div class="term-controls">
+                <button onclick="runDemo()" id="runDemoBtn">▶ Run demo</button>
+                <button onclick="resetDemo()" id="resetDemoBtn" style="display:none;">↻ Reset</button>
             </div>
         </section>
 
@@ -375,6 +474,154 @@
     </footer>
 
     <script>
+    // Interactive terminal demo
+    let currentStack = 'go';
+    let demoRunning = false;
+
+    const STACK_DEMOS = {
+        go: {
+            project: 'my-api',
+            stack: 'go',
+            mgr: 'go modules',
+            test: 'go test ./...',
+            run: 'go run ./cmd/server',
+            build: 'go build ./...',
+            deps: 'go mod download'
+        },
+        node: {
+            project: 'my-app',
+            stack: 'node',
+            mgr: 'pnpm',
+            test: 'pnpm test',
+            run: 'pnpm run dev',
+            build: 'pnpm run build',
+            deps: 'pnpm install'
+        },
+        rust: {
+            project: 'my-crate',
+            stack: 'rust',
+            mgr: 'cargo',
+            test: 'cargo test',
+            run: 'cargo run',
+            build: 'cargo build',
+            deps: 'cargo fetch'
+        },
+        python: {
+            project: 'my-service',
+            stack: 'python',
+            mgr: 'uv',
+            test: 'uv run pytest',
+            run: 'uv run python main.py',
+            build: 'uv build',
+            deps: 'uv sync'
+        },
+        ruby: {
+            project: 'my-rails-app',
+            stack: 'ruby',
+            mgr: 'bundler',
+            test: 'bundle exec rspec',
+            run: 'bundle exec rails s',
+            build: 'bundle exec rake build',
+            deps: 'bundle install'
+        },
+        zig: {
+            project: 'my-zig-project',
+            stack: 'zig',
+            mgr: 'zig',
+            test: 'zig build test',
+            run: 'zig build run',
+            build: 'zig build',
+            deps: ''
+        }
+    };
+
+    function setStack(stack) {
+        if (demoRunning) return;
+        currentStack = stack;
+        document.querySelectorAll('.stack-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        resetDemo();
+    }
+
+    function resetDemo() {
+        demoRunning = false;
+        document.getElementById('termOutput').innerHTML = '';
+        document.getElementById('termCursor').style.display = 'inline';
+        document.getElementById('runDemoBtn').style.display = 'inline-block';
+        document.getElementById('resetDemoBtn').style.display = 'none';
+    }
+
+    async function typeLine(text, delay = 30) {
+        const out = document.getElementById('termOutput');
+        const line = document.createElement('div');
+        line.style.marginBottom = '2px';
+        out.appendChild(line);
+        for (let i = 0; i < text.length; i++) {
+            line.textContent += text[i];
+            await sleep(delay);
+        }
+    }
+
+    async function printLine(text) {
+        const out = document.getElementById('termOutput');
+        const line = document.createElement('div');
+        line.innerHTML = text;
+        line.style.marginBottom = '2px';
+        out.appendChild(line);
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function runDemo() {
+        if (demoRunning) return;
+        demoRunning = true;
+        document.getElementById('runDemoBtn').style.display = 'none';
+        document.getElementById('resetDemoBtn').style.display = 'inline-block';
+        document.getElementById('termCursor').style.display = 'none';
+
+        const d = STACK_DEMOS[currentStack];
+        const mgrLabel = d.mgr ? ' + ' + d.mgr : '';
+
+        // Step 1: cd into project
+        await typeLine('$ cd ' + d.project, 25);
+        await sleep(300);
+
+        // Step 2: rex overview
+        await typeLine('$ rex', 25);
+        await sleep(500);
+        await printLine('');
+        await printLine('  <span style="color:var(--orange)">🦖</span> <strong>' + d.project + '</strong>');
+        await printLine('');
+        await printLine('  <span style="color:var(--dim)">stack</span>  <span style="color:var(--cyan)">' + d.stack + mgrLabel + '</span>');
+        await printLine('');
+        await printLine('  <span style="color:var(--dim)">commands</span>');
+        await printLine('    <span style="color:var(--cyan)">rex test</span>  <span style="color:var(--dim)">→</span> ' + d.test);
+        await printLine('    <span style="color:var(--cyan)">rex run</span>   <span style="color:var(--dim)">→</span> ' + d.run);
+        if (d.build) await printLine('    <span style="color:var(--cyan)">rex build</span> <span style="color:var(--dim)">→</span> ' + d.build);
+        if (d.deps) await printLine('    <span style="color:var(--cyan)">rex deps</span>  <span style="color:var(--dim)">→</span> ' + d.deps);
+        await printLine('');
+        await sleep(400);
+
+        // Step 3: rex test
+        await typeLine('$ rex test', 25);
+        await sleep(300);
+        await printLine('<span style="color:var(--dim)">→</span> ' + d.test);
+        await sleep(600);
+        await printLine('<span style="color:var(--green)">✓</span> <span style="color:var(--dim)">all tests passed</span>');
+        await printLine('');
+
+        // Show cursor again
+        document.getElementById('termCursor').style.display = 'inline';
+        demoRunning = false;
+    }
+
+    // Auto-run on first load
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(runDemo, 800);
+    });
+
     const DETECTIONS = {
         'go.mod': { stack: 'go', mgr: 'go modules', test: 'go test ./...', run: 'go run .', build: 'go build ./...', deps: 'go mod download' },
         'package.json': { stack: 'node', mgr: 'npm', test: 'npm test', run: 'npm run dev', build: 'npm run build', deps: 'npm install' },
